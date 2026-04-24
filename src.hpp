@@ -50,7 +50,7 @@ public:
     void addNode(TaskNode* node) {
         if (!node) return;
         
-        size_t target_slot = (current_slot + node->time / interval - 1) % size;
+        size_t target_slot = (current_slot + node->time / interval) % size;
         node->time = node->time % interval;
         
         node->next = node->prev = nullptr;
@@ -74,7 +74,6 @@ public:
         TaskNode* head = slots[current_slot];
         
         if (head) {
-            // Extract all nodes from this slot
             slots[current_slot] = nullptr;
             TaskNode* curr = head;
             
@@ -127,7 +126,6 @@ public:
     void cancelTask(TaskNode *p) {
         if (!p) return;
         
-        // Remove from linked list if it's in one
         if (p->prev && p->next) {
             if (p->next != p) {
                 p->prev->next = p->next;
@@ -141,14 +139,12 @@ public:
     std::vector<Task*> tick() {
         std::vector<Task*> result;
         
-        // Advance second wheel
         std::vector<TaskNode*> second_nodes = second_wheel.advance();
         
         for (TaskNode* node : second_nodes) {
             if (node->time == 0) {
                 result.push_back(node->task);
                 
-                // Reschedule if periodic
                 size_t period = node->task->getPeriod();
                 if (period > 0) {
                     node->time = period;
@@ -163,7 +159,6 @@ public:
                     delete node;
                 }
             } else {
-                // Move to appropriate wheel
                 if (node->time < 60) {
                     second_wheel.addNode(node);
                 } else if (node->time < 3600) {
@@ -174,7 +169,6 @@ public:
             }
         }
         
-        // Handle minute wheel carry
         if (second_wheel.current_slot == 0) {
             std::vector<TaskNode*> minute_nodes = minute_wheel.advance();
             
@@ -182,7 +176,6 @@ public:
                 if (node->time == 0) {
                     result.push_back(node->task);
                     
-                    // Reschedule if periodic
                     size_t period = node->task->getPeriod();
                     if (period > 0) {
                         node->time = period;
@@ -197,7 +190,6 @@ public:
                         delete node;
                     }
                 } else {
-                    // Move to appropriate wheel
                     if (node->time < 60) {
                         second_wheel.addNode(node);
                     } else if (node->time < 3600) {
@@ -208,7 +200,6 @@ public:
                 }
             }
             
-            // Handle hour wheel carry
             if (minute_wheel.current_slot == 0) {
                 std::vector<TaskNode*> hour_nodes = hour_wheel.advance();
                 
@@ -216,7 +207,6 @@ public:
                     if (node->time == 0) {
                         result.push_back(node->task);
                         
-                        // Reschedule if periodic
                         size_t period = node->task->getPeriod();
                         if (period > 0) {
                             node->time = period;
@@ -231,7 +221,6 @@ public:
                             delete node;
                         }
                     } else {
-                        // Move to appropriate wheel
                         if (node->time < 60) {
                             second_wheel.addNode(node);
                         } else if (node->time < 3600) {
