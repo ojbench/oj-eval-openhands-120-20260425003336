@@ -50,7 +50,7 @@ public:
     void addNode(TaskNode* node) {
         if (!node) return;
         
-        size_t target_slot = (current_slot + node->time / interval) % size;
+        size_t target_slot = (current_slot + node->time / interval - 1) % size;
         node->time = node->time % interval;
         
         node->next = node->prev = nullptr;
